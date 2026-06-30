@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PhotoLayout</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="app">
+      <header id="header">
+        <span class="app-title">PhotoLayout</span>
+        <div class="template-buttons">
+          <button class="tmpl-btn active" data-template="weekly">Weekly</button>
+          <button class="tmpl-btn" data-template="monthly">Monthly</button>
+          <button class="tmpl-btn" data-template="yearly">Yearly</button>
+        </div>
+        <div class="grid-controls">
+          <label>行:<input type="number" id="grid-rows" min="1" max="3" value="1"></label>
+          <label>列:<input type="number" id="grid-cols" min="1" max="6" value="5"></label>
+        </div>
+      </header>
+
+      <div id="main">
+        <div id="preview-container">
+          <canvas id="preview-canvas"></canvas>
+        </div>
+
+        <aside id="sidebar">
+          <div class="panel">
+            <div class="panel-header">写真</div>
+            <div class="panel-body">
+              <button id="btn-add-photos" class="btn-primary">写真を追加 / D&amp;D</button>
+              <input type="file" id="file-input" multiple accept="image/jpeg,image/png,image/webp" hidden>
+              <div id="photo-count"></div>
+              <div id="monthly-info"></div>
+              <p class="help-text">ドラッグ: 位置移動 | ホイール: ズーム<br>Alt+ドラッグ: 回転 (90°スナップ)</p>
+            </div>
+          </div>
+
+          <div class="panel" id="labels-panel">
+            <div class="panel-header">ラベル</div>
+            <div class="panel-body" id="labels-body"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">スタイル</div>
+            <div class="panel-body">
+              <div class="form-row">
+                <label>ギャップ</label>
+                <input type="range" id="input-gap" min="0" max="20" value="0">
+                <span id="gap-val">0px</span>
+              </div>
+              <div class="form-row">
+                <label>背景色</label>
+                <input type="color" id="input-bg-color" value="#000000">
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="font-panel">
+            <div class="panel-header">フォント</div>
+            <div class="panel-body">
+              <div class="form-row">
+                <label>サイズ</label>
+                <input type="range" id="input-font-size" min="16" max="120" value="48">
+                <span id="font-size-val">48px</span>
+              </div>
+              <div class="form-row">
+                <label>色</label>
+                <input type="color" id="input-font-color" value="#ffffff">
+              </div>
+              <div class="form-row">
+                <label>太字</label>
+                <input type="checkbox" id="input-font-bold">
+              </div>
+              <div class="form-row">
+                <label>透明度</label>
+                <input type="range" id="input-label-bg-opacity" min="0" max="100" value="50">
+                <span id="label-bg-opacity-val">50%</span>
+              </div>
+              <div class="form-row">
+                <label>色を同期</label>
+                <input type="checkbox" id="input-label-bg-sync" checked>
+              </div>
+              <div class="form-row" id="label-bg-color-row">
+                <label>背景色</label>
+                <input type="color" id="input-label-bg-color" value="#ffffff">
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="overlay-panel" hidden>
+            <div class="panel-header">テキストオーバーレイ</div>
+            <div class="panel-body">
+              <div class="form-row">
+                <label>表示</label>
+                <input type="checkbox" id="input-overlay-enabled">
+              </div>
+              <div class="form-row">
+                <label>テキスト</label>
+                <input type="text" id="input-overlay-text" value="#VRC12Photos 2025">
+              </div>
+              <div class="form-row">
+                <label>サイズ</label>
+                <input type="range" id="input-overlay-size" min="24" max="160" value="72">
+                <span id="overlay-size-val">72px</span>
+              </div>
+              <div class="form-row">
+                <label>位置</label>
+                <select id="input-overlay-pos">
+                  <option value="top-left">左上</option>
+                  <option value="top-right">右上</option>
+                  <option value="bottom-left">左下</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>色</label>
+                <input type="color" id="input-overlay-color" value="#ffffff">
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <footer id="footer">
+        <div class="footer-group">
+          <select id="input-format">
+            <option value="png">PNG</option>
+            <option value="jpeg">JPEG</option>
+          </select>
+          <div id="quality-group">
+            <label>品質:</label>
+            <input type="range" id="input-quality" min="10" max="100" value="90">
+            <span id="quality-val">90%</span>
+          </div>
+        </div>
+        <div class="footer-group">
+          <label>ファイル名:</label>
+          <input type="text" id="input-filename">
+          <button id="btn-download" class="btn-primary">⬇ ダウンロード</button>
+        </div>
+      </footer>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
