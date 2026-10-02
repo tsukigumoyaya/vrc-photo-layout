@@ -3,113 +3,221 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#161936" />
     <title>PhotoLayout</title>
+    <meta name="description" content="VRChatの写真を並べて、4Kの1枚にまとめるレイアウトツール" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Outfit:wght@400;500;600;700&family=Yusei+Magic&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
   </head>
   <body>
     <div id="app">
       <header id="header">
-        <span class="app-title">PhotoLayout</span>
-        <div class="template-buttons">
-          <button class="tmpl-btn active" data-template="weekly">Weekly</button>
-          <button class="tmpl-btn" data-template="monthly">Monthly</button>
-          <button class="tmpl-btn" data-template="yearly">Yearly</button>
-        </div>
-        <div class="grid-controls">
-          <label>行:<input type="number" id="grid-rows" min="1" max="3" value="1"></label>
-          <label>列:<input type="number" id="grid-cols" min="1" max="6" value="5"></label>
-        </div>
+        <h1 class="wordmark" aria-label="PhotoLayout">
+          <span class="wordmark-photo">Photo</span><span class="wordmark-layout">Layout</span>
+        </h1>
+        <p class="tagline">VRChatの写真を、4Kの1枚に。</p>
+        <div class="header-status" id="header-status" aria-live="polite"></div>
       </header>
 
-      <div id="main">
-        <div id="preview-container">
-          <canvas id="preview-canvas"></canvas>
-        </div>
-
-        <aside id="sidebar">
-          <div class="panel">
-            <div class="panel-header">写真</div>
-            <div class="panel-body">
-              <button id="btn-add-photos" class="btn-primary">写真を追加 / D&amp;D</button>
-              <input type="file" id="file-input" multiple accept="image/jpeg,image/png,image/webp" hidden>
-              <div id="photo-count"></div>
-              <div id="monthly-info"></div>
-              <p class="help-text">ドラッグ: 位置移動 | ホイール: ズーム<br>Alt+ドラッグ: 回転 (90°スナップ)</p>
+      <nav id="rail" aria-label="レイアウト">
+        <div id="rail-groups"></div>
+        <section class="rail-group" aria-labelledby="rail-custom-title">
+          <h2 class="rail-title" id="rail-custom-title">自由グリッド</h2>
+          <div class="rail-custom">
+            <button class="rail-item" type="button" data-template="__custom" aria-pressed="false">
+              <canvas class="rail-thumb" width="320" height="180" aria-hidden="true"></canvas>
+              <span class="rail-name">行と列を指定</span>
+            </button>
+            <div class="grid-controls">
+              <label>行<input type="number" id="grid-rows" min="1" max="3" value="1" inputmode="numeric"></label>
+              <span class="grid-times" aria-hidden="true">×</span>
+              <label>列<input type="number" id="grid-cols" min="1" max="6" value="5" inputmode="numeric"></label>
             </div>
           </div>
+        </section>
+      </nav>
 
-          <div class="panel" id="labels-panel">
-            <div class="panel-header">ラベル</div>
-            <div class="panel-body" id="labels-body"></div>
+      <main id="stage">
+        <div id="preview-container">
+          <div class="light-table" aria-hidden="true"></div>
+          <div class="mount" id="mount">
+            <canvas id="preview-canvas" aria-label="レイアウトのプレビュー"></canvas>
           </div>
+          <div id="empty-state" class="empty-state">
+            <p class="empty-title">VRChatの写真を<br>ここにドロップ</p>
+            <p class="empty-note">PNG、JPEG、WebP。何枚でもまとめて入れられます。</p>
+            <button id="btn-empty-add" class="btn-lamp" type="button">写真を選ぶ</button>
+          </div>
+        </div>
+        <div id="toast" class="toast" role="status"></div>
+      </main>
 
-          <div class="panel">
-            <div class="panel-header">スタイル</div>
-            <div class="panel-body">
+      <aside id="inspector" aria-label="設定">
+        <div class="tabs" role="tablist" aria-label="設定の切り替え">
+          <button class="tab" role="tab" id="tab-photos" aria-controls="pane-photos" aria-selected="true">写真</button>
+          <button class="tab" role="tab" id="tab-layout" aria-controls="pane-layout" aria-selected="false" tabindex="-1">レイアウト</button>
+          <button class="tab" role="tab" id="tab-text" aria-controls="pane-text" aria-selected="false" tabindex="-1">文字</button>
+          <span class="tab-ink" aria-hidden="true"></span>
+        </div>
+
+        <div class="panes">
+          <!-- 写真 -->
+          <section class="pane" id="pane-photos" role="tabpanel" aria-labelledby="tab-photos">
+            <button id="btn-add-photos" class="btn-ghost" type="button">写真を追加</button>
+            <input type="file" id="file-input" multiple accept="image/jpeg,image/png,image/webp" hidden>
+            <p id="photo-count" class="meta"></p>
+            <div id="photo-strip" class="photo-strip" aria-label="読み込んだ写真"></div>
+            <p id="monthly-info" class="meta"></p>
+
+            <h3 class="pane-title">操作</h3>
+            <dl class="keys">
+              <div><dt>ドラッグ</dt><dd>写真の位置を動かす</dd></div>
+              <div><dt>ホイール</dt><dd>拡大・縮小</dd></div>
+              <div><dt><kbd>Alt</kbd>＋ドラッグ</dt><dd>回転（90°で吸着）</dd></div>
+              <div><dt><kbd>Shift</kbd>＋ドラッグ</dt><dd>写真を入れ替える</dd></div>
+              <div><dt>クリック</dt><dd>写真を差し替える</dd></div>
+            </dl>
+            <dl class="keys keys-touch">
+              <div><dt>2本指</dt><dd>拡大・縮小と回転</dd></div>
+              <div><dt>長押し→ドラッグ</dt><dd>写真を入れ替える</dd></div>
+              <div><dt>タップ</dt><dd>選択。もう一度で差し替え</dd></div>
+            </dl>
+          </section>
+
+          <!-- レイアウト -->
+          <section class="pane" id="pane-layout" role="tabpanel" aria-labelledby="tab-layout" hidden>
+            <div id="layout-options-panel" class="group" hidden>
+              <h3 class="pane-title" id="layout-options-title">レイアウト設定</h3>
+              <div id="layout-options-body">
+                <div class="form-row" data-for="hero">
+                  <label for="opt-hero-pos">主役の位置</label>
+                  <select id="opt-hero-pos">
+                    <option value="left">左</option>
+                    <option value="right">右</option>
+                    <option value="center">中央</option>
+                  </select>
+                </div>
+                <p class="hint" data-for="hero">1枚目が主役です。Shift＋ドラッグで主役を入れ替えられます。</p>
+                <div class="form-row" data-for="diagonal">
+                  <label for="opt-diagonal-slant">傾き</label>
+                  <input type="range" id="opt-diagonal-slant" min="0" max="900" step="10" value="300">
+                  <output id="opt-diagonal-slant-val">300px</output>
+                </div>
+                <div class="form-row" data-for="polaroid">
+                  <label for="opt-polaroid-tilt">傾き</label>
+                  <input type="range" id="opt-polaroid-tilt" min="0" max="15" value="6">
+                  <output id="opt-polaroid-tilt-val">6°</output>
+                </div>
+                <div class="form-row" data-for="calendar">
+                  <label for="opt-cal-month">月</label>
+                  <input type="month" id="opt-cal-month">
+                </div>
+                <div class="form-row" data-for="calendar">
+                  <label for="opt-cal-weekstart">週の始まり</label>
+                  <select id="opt-cal-weekstart">
+                    <option value="0">日曜</option>
+                    <option value="1">月曜</option>
+                  </select>
+                </div>
+                <p class="hint" data-for="calendar">ファイル名（VRChat_2026-10-01_…）か更新日時から撮影日を読み取り、その日のマスに置きます。</p>
+                <div class="form-row" data-for="minimal timeline scrapbook">
+                  <label for="opt-design-title">タイトル</label>
+                  <input type="text" id="opt-design-title" class="opt-text">
+                </div>
+                <div class="form-row" data-for="minimal scrapbook">
+                  <label for="opt-paper-color">紙の色</label>
+                  <input type="color" id="opt-paper-color" value="#f3efe7">
+                </div>
+                <div class="form-row" data-for="bgframe">
+                  <label for="opt-bg-blur">ぼかし</label>
+                  <input type="range" id="opt-bg-blur" min="0" max="100" value="36">
+                  <output id="opt-bg-blur-val">36px</output>
+                </div>
+                <div class="form-row" data-for="bgframe">
+                  <label for="opt-bg-dim">暗さ</label>
+                  <input type="range" id="opt-bg-dim" min="0" max="70" value="25">
+                  <output id="opt-bg-dim-val">25%</output>
+                </div>
+                <p class="hint" data-for="bgframe">1枚目がぼかした背景になります。</p>
+                <p class="hint" data-for="timeline">時刻はファイル名（VRChat_…_21-30-12）か更新日時から読み取ります。</p>
+                <button id="btn-sort-time" class="btn-ghost" type="button" data-for="timeline">撮影時刻の順に並べ替え</button>
+                <button id="btn-layout-variant" class="btn-ghost" type="button" data-for="auto justified masonry polaroid scrapbook">別の配置を試す</button>
+              </div>
+            </div>
+
+            <div class="group">
+              <h3 class="pane-title">余白と背景</h3>
               <div class="form-row">
-                <label>ギャップ</label>
-                <input type="range" id="input-gap" min="0" max="20" value="0">
-                <span id="gap-val">0px</span>
+                <label for="input-gap">写真の間隔</label>
+                <input type="range" id="input-gap" min="0" max="40" value="0">
+                <output id="gap-val">0px</output>
               </div>
               <div class="form-row">
-                <label>背景色</label>
+                <label for="input-bg-color">背景色</label>
                 <input type="color" id="input-bg-color" value="#000000">
               </div>
             </div>
-          </div>
+            <button id="btn-reset-settings" class="btn-text" type="button">スタイルを初期値に戻す</button>
+          </section>
 
-          <div class="panel" id="font-panel">
-            <div class="panel-header">フォント</div>
-            <div class="panel-body">
+          <!-- 文字 -->
+          <section class="pane" id="pane-text" role="tabpanel" aria-labelledby="tab-text" hidden>
+            <p id="text-empty" class="meta">このレイアウトには文字が入りません。</p>
+
+            <div class="group" id="labels-panel">
+              <h3 class="pane-title">ラベル</h3>
+              <div id="labels-body" class="labels"></div>
+            </div>
+
+            <div class="group" id="font-panel">
+              <h3 class="pane-title">フォント</h3>
               <div class="form-row">
-                <label>サイズ</label>
+                <label for="input-font-size">サイズ</label>
                 <input type="range" id="input-font-size" min="16" max="120" value="48">
-                <span id="font-size-val">48px</span>
+                <output id="font-size-val">48px</output>
               </div>
               <div class="form-row">
-                <label>色</label>
+                <label for="input-font-color">文字色</label>
                 <input type="color" id="input-font-color" value="#ffffff">
               </div>
               <div class="form-row">
-                <label>太字</label>
-                <input type="checkbox" id="input-font-bold">
+                <label for="input-font-bold">太字</label>
+                <input type="checkbox" id="input-font-bold" class="switch">
               </div>
               <div class="form-row">
-                <label>透明度</label>
+                <label for="input-label-bg-opacity">帯の濃さ</label>
                 <input type="range" id="input-label-bg-opacity" min="0" max="100" value="50">
-                <span id="label-bg-opacity-val">50%</span>
+                <output id="label-bg-opacity-val">50%</output>
               </div>
               <div class="form-row">
-                <label>色を同期</label>
-                <input type="checkbox" id="input-label-bg-sync" checked>
+                <label for="input-label-bg-sync">帯を同じ色に</label>
+                <input type="checkbox" id="input-label-bg-sync" class="switch" checked>
               </div>
               <div class="form-row" id="label-bg-color-row">
-                <label>背景色</label>
+                <label for="input-label-bg-color">帯の色</label>
                 <input type="color" id="input-label-bg-color" value="#ffffff">
               </div>
             </div>
-          </div>
 
-          <div class="panel" id="overlay-panel" hidden>
-            <div class="panel-header">テキストオーバーレイ</div>
-            <div class="panel-body">
+            <div class="group" id="overlay-panel" hidden>
+              <h3 class="pane-title">ハッシュタグ</h3>
               <div class="form-row">
-                <label>表示</label>
-                <input type="checkbox" id="input-overlay-enabled">
+                <label for="input-overlay-enabled">表示する</label>
+                <input type="checkbox" id="input-overlay-enabled" class="switch">
               </div>
               <div class="form-row">
-                <label>テキスト</label>
-                <input type="text" id="input-overlay-text" value="#VRC12Photos 2025">
+                <label for="input-overlay-text">テキスト</label>
+                <input type="text" id="input-overlay-text" class="opt-text" value="">
               </div>
               <div class="form-row">
-                <label>サイズ</label>
+                <label for="input-overlay-size">サイズ</label>
                 <input type="range" id="input-overlay-size" min="24" max="160" value="72">
-                <span id="overlay-size-val">72px</span>
+                <output id="overlay-size-val">72px</output>
               </div>
               <div class="form-row">
-                <label>位置</label>
+                <label for="input-overlay-pos">位置</label>
                 <select id="input-overlay-pos">
                   <option value="top-left">左上</option>
                   <option value="top-right">右上</option>
@@ -117,35 +225,43 @@
                 </select>
               </div>
               <div class="form-row">
-                <label>色</label>
+                <label for="input-overlay-color">色</label>
                 <input type="color" id="input-overlay-color" value="#ffffff">
               </div>
             </div>
-          </div>
-        </aside>
-      </div>
+          </section>
+        </div>
 
-      <footer id="footer">
-        <div class="footer-group">
-          <select id="input-format">
-            <option value="png">PNG</option>
-            <option value="jpeg">JPEG</option>
-          </select>
-          <div id="quality-group">
-            <label>品質:</label>
-            <input type="range" id="input-quality" min="10" max="100" value="100">
-            <span id="quality-val">100%</span>
+        <footer id="footer" class="export">
+          <div class="export-row">
+            <div class="segmented" role="radiogroup" aria-label="形式">
+              <select id="input-format" class="visually-hidden" tabindex="-1" aria-hidden="true">
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+              </select>
+              <button type="button" class="seg" data-format="png" role="radio" aria-checked="true">PNG</button>
+              <button type="button" class="seg" data-format="jpeg" role="radio" aria-checked="false">JPEG</button>
+            </div>
+            <div id="quality-group" class="quality">
+              <label for="input-quality">品質</label>
+              <input type="range" id="input-quality" min="10" max="100" value="100">
+              <output id="quality-val">100%</output>
+            </div>
           </div>
-        </div>
-        <div class="footer-group">
-          <label>ファイル名:</label>
-          <input type="text" id="input-filename">
-          <button id="btn-download" class="btn-primary">⬇ ダウンロード</button>
-        </div>
-      </footer>
+          <label class="filename">
+            <span>ファイル名</span>
+            <span class="filename-field">
+              <input type="text" id="input-filename" spellcheck="false">
+              <span class="filename-ext" id="filename-ext">.png</span>
+            </span>
+          </label>
+          <button id="btn-download" class="btn-lamp btn-export" type="button">
+            <span class="btn-export-main">書き出す</span>
+            <span class="btn-export-sub" id="export-sub">3840 × 2160 PNG</span>
+          </button>
+        </footer>
+      </aside>
     </div>
-
-    <div id="toast" class="toast"></div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

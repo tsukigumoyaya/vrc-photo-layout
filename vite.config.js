@@ -1,3 +1,4 @@
 export default {
-  base: '/vrc-photo-layout/',
+  // 相対パスにしてリポジトリ名に依存しないようにする
+  base: './',
 }
